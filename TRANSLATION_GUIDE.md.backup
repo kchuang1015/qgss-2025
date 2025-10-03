@@ -1,0 +1,116 @@
+# Lab3 逐步翻譯工具使用指南
+
+## 工具概述
+
+已創建兩個 Python 腳本來協助 lab3.ipynb 的翻譯工作：
+
+1. **translate_single_cell.py** - 單一 cell 翻譯工具
+2. **merge_translated_cells.py** - 合併已翻譯的 cells
+
+## 工作流程
+
+### 步驟 1：提取並檢視 Cell
+
+```bash
+# 提取並顯示 cell 1 的內容
+python translate_single_cell.py --cell-index 1
+```
+
+這會：
+- 顯示原始英文內容（前 1000 字元）
+- 識別並保護 LaTeX 公式和程式碼區塊
+- 保存原始內容到 `/tmp/translated_cells/cell_1.json`
+
+### 步驟 2：準備翻譯文字
+
+將翻譯後的繁體中文內容保存到文字檔，例如 `translation_1.txt`
+
+**重要：**
+- 保持相同的格式結構
+- 不要翻譯 LaTeX 公式（如 `$O_2$`、`$N_2$`）
+- 不要翻譯程式碼區塊
+
+### 步驟 3：應用翻譯
+
+```bash
+# 應用翻譯到 cell 1
+python translate_single_cell.py --cell-index 1 --translation-file translation_1.txt
+```
+
+這會：
+- 讀取翻譯內容
+- 自動還原 LaTeX 公式和程式碼區塊
+- 更新 `/tmp/translated_cells/cell_1.json`
+
+### 步驟 4：批次處理多個 Cells
+
+```bash
+# 翻譯 cells 1-10
+for i in {1..10}; do
+    python translate_single_cell.py --cell-index $i --translation-file translation_$i.txt
+done
+```
+
+### 步驟 5：合併所有翻譯
+
+```bash
+# 將所有已翻譯的 cells 合併到新的 notebook
+python merge_translated_cells.py
+```
+
+這會：
+- 讀取所有 `/tmp/translated_cells/cell_*.json` 檔案
+- 合併到原始 notebook
+- 輸出為 `lab-3/lab3_tw.ipynb`
+
+## 分批翻譯建議
+
+lab3.ipynb 共有 112 cells，建議分批處理：
+
+### 批次 1：目錄和介紹（Cells 0-10）
+```bash
+# 先提取所有 cells 查看內容
+for i in {0..10}; do
+    python translate_single_cell.py --cell-index $i
+done
+```
+
+### 批次 2：VQE 部分（Cells 11-40）
+```bash
+for i in {11..40}; do
+    python translate_single_cell.py --cell-index $i --translation-file translations/cell_$i.txt
+done
+```
+
+### 批次 3：SQD 部分（Cells 41-70）
+### 批次 4：練習和總結（Cells 71-111）
+
+## 檢查翻譯進度
+
+```bash
+# 查看已翻譯的 cells
+ls -la /tmp/translated_cells/
+
+# 統計已翻譯數量
+ls /tmp/translated_cells/cell_*.json | wc -l
+```
+
+## 只翻譯 Markdown Cells
+
+工具會自動識別 cell 類型：
+- **Markdown cells**：需要翻譯
+- **Code cells**：直接複製，不翻譯
+
+## 測試結果
+
+✅ Cell 1 測試成功：
+- 原始內容：Table of Contents（目錄）
+- 保護了 3 個 LaTeX 公式（$O_2$, $N_2$）
+- 成功合併到 lab3_tw.ipynb
+
+## 下一步
+
+1. 檢視已提取的 Cell 1 內容
+2. 準備 Cell 1 的繁體中文翻譯
+3. 應用翻譯並驗證結果
+4. 繼續處理其他 cells
